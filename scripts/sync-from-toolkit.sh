@@ -8,12 +8,31 @@
 # Toolkit are deleted in src/ too, so src/ always matches what was built.
 # Nothing is committed. Review the changes with `git status` afterwards.
 #
-# Usage:
-#   scripts/sync-from-toolkit.sh [--dry-run] [--version X.Y.Z]
+# HOW TO RUN
+# Open Git Bash (or the VS Code terminal set to Git Bash) in the repo folder, then:
+#
+#   bash scripts/sync-from-toolkit.sh --dry-run
+#       Preview: lists what would change, changes nothing.
+#
+#   bash scripts/sync-from-toolkit.sh
+#       Pull the Toolkit project into src/.
+#
+#   bash scripts/sync-from-toolkit.sh --version 1.0.1
+#       Same, plus copy the built pak to releases/v1.0.1/ and create
+#       releases/v1.0.1/v1.0.1.md (notes template) if it doesn't exist.
+#
+#   BG3_DATA="/d/SteamLibrary/steamapps/common/Baldurs Gate 3/Data" bash scripts/sync-from-toolkit.sh
+#       Game installed somewhere else.
+#
+#   bash scripts/sync-from-toolkit.sh --help
+#       Show this text.
 #
 # Paths (override when the game isn't in the default Steam location):
 #   BG3_DATA  the game's Data folder (where the Toolkit keeps projects)
 #   BG3_PAKS  where the Toolkit puts the built .pak
+#
+# Run from another folder by giving the full path to the script; it always finds
+# the repo from its own location. See scripts/README.md for when to use which script.
 
 set -euo pipefail
 
@@ -40,7 +59,7 @@ while [[ $# -gt 0 ]]; do
     case "$1" in
         -n|--dry-run) DRY_RUN=1; shift ;;
         -v|--version) VERSION="${2:?--version needs a value, e.g. 1.0.1}"; shift 2 ;;
-        -h|--help) sed -n '2,17p' "$0"; exit 0 ;;
+        -h|--help) sed -n '2,/^$/{s/^# \{0,1\}//;p}' "$0"; exit 0 ;;
         *) echo "Unknown argument: $1 (try --help)" >&2; exit 1 ;;
     esac
 done
@@ -94,6 +113,15 @@ if [[ -n "$VERSION" ]]; then
     if (( ! DRY_RUN )); then
         mkdir -p "$release_dir"
         cp "$pak" "$release_dir/"
+    fi
+
+    # The release workflow requires notes; start a template if there are none.
+    notes="$release_dir/v$VERSION.md"
+    if [[ ! -f "$notes" ]]; then
+        echo "  notes releases/v$VERSION/v$VERSION.md (template - fill it in before pushing)"
+        if (( ! DRY_RUN )); then
+            printf '%s\n' "# Val's DnD AIO Beyond Patch v$VERSION" '' '## Changes' '- ' '' '## Known Issues' '- ' > "$notes"
+        fi
     fi
 fi
 

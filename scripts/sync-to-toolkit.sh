@@ -12,11 +12,34 @@
 #     it's probably an unsynced Toolkit edit. The script stops and lists those
 #     files, unless --force is given. Run sync-from-toolkit.sh first to keep them.
 #
-# Usage:
-#   scripts/sync-to-toolkit.sh [--dry-run] [--prune] [--force]
+# HOW TO RUN
+# Close the BG3 Toolkit. Open Git Bash (or the VS Code terminal set to Git Bash)
+# in the repo folder, then:
+#
+#   bash scripts/sync-to-toolkit.sh --dry-run
+#       Preview: lists what would change, changes nothing.
+#
+#   bash scripts/sync-to-toolkit.sh
+#       Copy src/ into the Toolkit project. Then open the Toolkit and build.
+#
+#   bash scripts/sync-to-toolkit.sh --prune
+#       Also delete Toolkit files you removed from the repo.
+#
+#   bash scripts/sync-to-toolkit.sh --force
+#       Overwrite Toolkit files that are newer than the repo's copy.
+#       Only after checking they're edits you don't need.
+#
+#   BG3_DATA="/d/SteamLibrary/steamapps/common/Baldurs Gate 3/Data" bash scripts/sync-to-toolkit.sh
+#       Game installed somewhere else.
+#
+#   bash scripts/sync-to-toolkit.sh --help
+#       Show this text.
 #
 # Paths (override when the game isn't in the default Steam location):
 #   BG3_DATA  the game's Data folder (where the Toolkit keeps projects)
+#
+# Run from another folder by giving the full path to the script; it always finds
+# the repo from its own location. See scripts/README.md for when to use which script.
 
 set -euo pipefail
 
@@ -40,7 +63,7 @@ while [[ $# -gt 0 ]]; do
         -n|--dry-run) DRY_RUN=1; shift ;;
         --prune) PRUNE=1; shift ;;
         --force) FORCE=1; shift ;;
-        -h|--help) sed -n '2,20p' "$0"; exit 0 ;;
+        -h|--help) sed -n '2,/^$/{s/^# \{0,1\}//;p}' "$0"; exit 0 ;;
         *) echo "Unknown argument: $1 (try --help)" >&2; exit 1 ;;
     esac
 done

@@ -28,10 +28,32 @@
     The game's Data folder. Defaults to the BG3_DATA environment variable, then
     the standard Steam install path.
 
-.EXAMPLE
-    .\scripts\Sync-ToToolkit.ps1 -WhatIf
-    .\scripts\Sync-ToToolkit.ps1
-    .\scripts\Sync-ToToolkit.ps1 -Prune
+.NOTES
+    HOW TO RUN
+    Close the BG3 Toolkit. Open PowerShell (or the VS Code terminal) in the
+    repo folder, then:
+
+        powershell -ExecutionPolicy Bypass -File scripts\Sync-ToToolkit.ps1 -WhatIf
+            Preview: lists what would change, changes nothing.
+
+        powershell -ExecutionPolicy Bypass -File scripts\Sync-ToToolkit.ps1
+            Copy src\ into the Toolkit project. Then open the Toolkit and build.
+
+        powershell -ExecutionPolicy Bypass -File scripts\Sync-ToToolkit.ps1 -Prune
+            Also delete Toolkit files you removed from the repo.
+
+        powershell -ExecutionPolicy Bypass -File scripts\Sync-ToToolkit.ps1 -Force
+            Overwrite Toolkit files that are newer than the repo's copy.
+            Only after checking they're edits you don't need.
+
+        powershell -ExecutionPolicy Bypass -File scripts\Sync-ToToolkit.ps1 -GameData "D:\SteamLibrary\steamapps\common\Baldurs Gate 3\Data"
+            Game installed somewhere else (or set BG3_DATA once instead).
+
+    "-ExecutionPolicy Bypass" lets Windows run the script for that one command;
+    it doesn't change any system setting. Run from another folder by giving the
+    full path to the script; it always finds the repo from its own location.
+
+    See scripts\README.md for when to use which script.
 #>
 [CmdletBinding()]
 param(

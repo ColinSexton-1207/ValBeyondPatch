@@ -1,0 +1,94 @@
+# Creates a GitHub release when a push adds a new releases/vX.Y.Z/*.pak, then
+# uploads it to Nexus Mods.
+#
+# Flow: build in the Toolkit -> scripts/Sync-FromToolkit.ps1 -Version X.Y.Z
+# (copies the pak and creates releases/vX.Y.Z/vX.Y.Z.md) -> fill in the notes ->
+# commit and push to main. This workflow does the rest.
+#
+# Only a pak *added* in the push counts, so editing an existing release folder
+# doesn't re-release it. Releases created here don't trigger nexus-release.yml's
+# release event (GitHub blocks that), so the upload is called directly below.
+
+name: Release
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'releases/**/*.pak'
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    outputs:
+      tag: ${{ steps.find.outputs.tag }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Find the new release folder
+        id: find
+        run: |
+          before="${{ github.event.before }}"
+          if [[ "$before" =~ ^0+$ ]]; then
+            # First push of a branch: only look at the pushed commit.
+            added=$(git show --pretty=format: --name-only --diff-filter=A HEAD -- 'releases/*/*.pak')
+          else
+            added=$(git diff --name-only --diff-filter=A "$before" "${{ github.sha }}" -- 'releases/*/*.pak')
+          fi
+          added=$(printf '%s\n' "$added" | sed '/^$/d')
+          count=$(printf '%s\n' "$added" | sed '/^$/d' | wc -l)
+
+          if [ "$count" -eq 0 ]; then
+            echo "No new pak in this push; nothing to release."
+            exit 0
+          fi
+          if [ "$count" -gt 1 ]; then
+            echo "::error::This push adds $count paks. Push one release at a time:"
+            echo "$added"
+            exit 1
+          fi
+
+          tag=$(basename "$(dirname "$added")")
+          if [[ ! "$tag" =~ ^v[0-9]+(\.[0-9]+)+$ ]]; then
+            echo "::error::Release folder '$tag' isn't a version like v1.0.1."
+            exit 1
+          fi
+          if git rev-parse -q --verify "refs/tags/$tag" >/dev/null; then
+            echo "::error::Tag $tag already exists. Bump the version for a new release."
+            exit 1
+          fi
+          if [ "$(ls releases/"$tag"/*.pak | wc -l)" -ne 1 ]; then
+            echo "::error::releases/$tag/ must contain exactly one .pak."
+            exit 1
+          fi
+          if [ ! -s "releases/$tag/$tag.md" ]; then
+            echo "::error::Release notes missing: releases/$tag/$tag.md"
+            exit 1
+          fi
+
+          echo "Releasing $tag"
+          echo "tag=$tag" >> "$GITHUB_OUTPUT"
+
+      - name: Create the GitHub release
+        if: steps.find.outputs.tag != ''
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ steps.find.outputs.tag }}
+        run: |
+          gh release create "$TAG" releases/"$TAG"/*.pak \
+            --target "${{ github.sha }}" \
+            --title "Val's DnD AIO Beyond Patch $TAG" \
+            --notes-file "releases/$TAG/$TAG.md"
+
+  nexus:
+    needs: release
+    if: needs.release.outputs.tag != ''
+    uses: ./.github/workflows/nexus-release.yml
+    with:
+      tag: ${{ needs.release.outputs.tag }}
+    secrets: inherit

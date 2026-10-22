@@ -25,10 +25,28 @@
     Where the Toolkit puts the built .pak. Defaults to the BG3_PAKS environment
     variable, then %LOCALAPPDATA%\Larian Studios\Baldur's Gate 3\Mods.
 
-.EXAMPLE
-    .\scripts\Sync-FromToolkit.ps1 -WhatIf
-    .\scripts\Sync-FromToolkit.ps1
-    .\scripts\Sync-FromToolkit.ps1 -Version 1.0.1
+.NOTES
+    HOW TO RUN
+    Open PowerShell (or the VS Code terminal) in the repo folder, then:
+
+        powershell -ExecutionPolicy Bypass -File scripts\Sync-FromToolkit.ps1 -WhatIf
+            Preview: lists what would change, changes nothing.
+
+        powershell -ExecutionPolicy Bypass -File scripts\Sync-FromToolkit.ps1
+            Pull the Toolkit project into src\.
+
+        powershell -ExecutionPolicy Bypass -File scripts\Sync-FromToolkit.ps1 -Version 1.0.1
+            Same, plus copy the built pak to releases\v1.0.1\ and create
+            releases\v1.0.1\v1.0.1.md (notes template) if it doesn't exist.
+
+        powershell -ExecutionPolicy Bypass -File scripts\Sync-FromToolkit.ps1 -GameData "D:\SteamLibrary\steamapps\common\Baldurs Gate 3\Data"
+            Game installed somewhere else (or set BG3_DATA once instead).
+
+    "-ExecutionPolicy Bypass" lets Windows run the script for that one command;
+    it doesn't change any system setting. Run from another folder by giving the
+    full path to the script; it always finds the repo from its own location.
+
+    See scripts\README.md for when to use which script.
 #>
 [CmdletBinding()]
 param(
@@ -103,6 +121,23 @@ if ($Version) {
     if (-not $WhatIf) {
         New-Item -ItemType Directory -Force -Path $releaseDir | Out-Null
         Copy-Item $pak $releaseDir -Force
+    }
+
+    # The release workflow requires notes; start a template if there are none.
+    $notes = Join-Path $releaseDir "v$Version.md"
+    if (-not (Test-Path $notes)) {
+        Write-Host "  notes releases\v$Version\v$Version.md (template - fill it in before pushing)"
+        if (-not $WhatIf) {
+            Set-Content -Path $notes -Encoding utf8 -Value @"
+# Val's DnD AIO Beyond Patch v$Version
+
+## Changes
+-
+
+## Known Issues
+-
+"@
+        }
     }
 }
 

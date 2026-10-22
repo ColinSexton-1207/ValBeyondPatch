@@ -1,8 +1,9 @@
-# Publishes a GitHub release to Nexus Mods.
+# Uploads a release's pak to Nexus Mods as a new version of the existing main file.
 #
-# Flow: build the pak in the BG3 Toolkit -> commit it to releases/vX.Y.Z/ ->
-# create a GitHub release tagged vX.Y.Z -> this workflow zips that pak and
-# uploads it to Nexus as a new version of the existing main file.
+# Runs two ways:
+#   - Called by release.yml after it creates a release from a pushed releases/vX.Y.Z/ folder.
+#   - On its own when you create a GitHub release by hand (tag vX.Y.Z, with
+#     releases/vX.Y.Z/ already committed).
 #
 # One-time setup (repo Settings -> Secrets and variables -> Actions):
 #   Secret   NESXUSMODS_API_KEY - from https://www.nexusmods.com/users/myaccount?tab=api
@@ -13,6 +14,12 @@ name: Publish to Nexus Mods
 on:
   release:
     types: [published]
+  workflow_call:
+    inputs:
+      tag:
+        description: Release tag, e.g. v1.0.1
+        required: true
+        type: string
 
 permissions:
   contents: read
@@ -20,18 +27,19 @@ permissions:
 jobs:
   nexus:
     runs-on: ubuntu-latest
+    env:
+      TAG: ${{ inputs.tag || github.event.release.tag_name }}
     steps:
       - uses: actions/checkout@v4
 
       - name: Zip the release's pak
         id: package
         run: |
-          tag="${{ github.event.release.tag_name }}"
-          version="${tag#v}"
+          version="${TAG#v}"
           shopt -s nullglob
-          paks=(releases/"$tag"/*.pak)
+          paks=(releases/"$TAG"/*.pak)
           if [ "${#paks[@]}" -ne 1 ]; then
-            echo "::error::Expected exactly one .pak in releases/$tag/, found ${#paks[@]}."
+            echo "::error::Expected exactly one .pak in releases/$TAG/, found ${#paks[@]}."
             exit 1
           fi
           zip_name="ValBeyondPatch-v${version}.zip"
@@ -52,4 +60,4 @@ jobs:
           category: main
           archive_existing_version: true
           update_mod_version: true
-          changelog: "Release notes: ${{ github.event.release.html_url }}"
+          changelog: "Release notes: ${{ github.server_url }}/${{ github.repository }}/releases/tag/${{ inputs.tag || github.event.release.tag_name }}"
