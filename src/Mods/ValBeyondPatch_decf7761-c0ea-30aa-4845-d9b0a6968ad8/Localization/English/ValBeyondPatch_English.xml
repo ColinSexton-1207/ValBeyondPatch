@@ -1,0 +1,9 @@
+<?xml version="1.0"?>
+<contentList xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+  <content contentuid="h17df3e22g73a9g48c7ga6ccge263cbca0265" version="1">Once per Short Rest, as a free action, you can quicken your magic: the next spell you cast this turn that costs an action costs a bonus action instead.</content>
+  <content contentuid="h1f104bcag105cg4356gaa25gc35ace5f811b" version="1">The next spell you cast this turn that costs an action costs a bonus action instead.</content>
+  <content contentuid="h6dffd14fg4c6ag42b3gbdb6g5115e75e9d18" version="1">Spell Freedom</content>
+  <content contentuid="h4f61caefg64d3g4626g863bg2d1141ba1120" version="2">While toggled on, you ignore the One Spell with a Spell Slot per Turn rule and can cast more than one spell that uses a spell slot on your turn. If you have the Swift Witchcraft feat, its action becomes a free Quickened Spell once per Short Rest. (Val's DnD AIO Beyond Patch)</content>
+  <content contentuid="h8e365957g5b10g4f83gb30agc9ff9bf7881e" version="1">Vanilla Short Rests</content>
+  <content contentuid="h7ebb1554gc822g4b04gb05cgaf29da4ce464" version="2">While toggled on, short rests restore hit points as in the base game instead of healing 1 hit point and unlocking Use Hit Point Dice. Hit Point Dice are still spent by the features that use them. (Val's DnD AIO Beyond Patch)</content>
+</contentList>
