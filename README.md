@@ -6,7 +6,7 @@ A small override patch for the [`bg3dnd`](https://github.com/Yoonmoonsik/bg3dnd)
 
 ---
 
-## Mod Page Links
+## 🪄 Mod Page Links
 * **Mod.io:** [Mod.io - ValBeyondPatch](https://mod.io/g/baldursgate3/m/vals-dnd-aio-beyond-patch)
 * **Nexus Mods:** [Nexus - ValBeyondPatch](https://www.nexusmods.com/baldursgate3/mods/25986?published=1)
 
