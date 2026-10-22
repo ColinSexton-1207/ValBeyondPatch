@@ -1,0 +1,55 @@
+# Publishes a GitHub release to Nexus Mods.
+#
+# Flow: build the pak in the BG3 Toolkit -> commit it to releases/vX.Y.Z/ ->
+# create a GitHub release tagged vX.Y.Z -> this workflow zips that pak and
+# uploads it to Nexus as a new version of the existing main file.
+#
+# One-time setup (repo Settings -> Secrets and variables -> Actions):
+#   Secret   NESXUSMODS_API_KEY - from https://www.nexusmods.com/users/myaccount?tab=api
+#   Variable NEXUSMOD_FILE_ID   - the main file's ID (the first upload must be done by hand on Nexus)
+
+name: Publish to Nexus Mods
+
+on:
+  release:
+    types: [published]
+
+permissions:
+  contents: read
+
+jobs:
+  nexus:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Zip the release's pak
+        id: package
+        run: |
+          tag="${{ github.event.release.tag_name }}"
+          version="${tag#v}"
+          shopt -s nullglob
+          paks=(releases/"$tag"/*.pak)
+          if [ "${#paks[@]}" -ne 1 ]; then
+            echo "::error::Expected exactly one .pak in releases/$tag/, found ${#paks[@]}."
+            exit 1
+          fi
+          zip_name="ValBeyondPatch-v${version}.zip"
+          zip -j "$zip_name" "${paks[0]}"
+          echo "version=${version}" >> "$GITHUB_OUTPUT"
+          echo "zip_name=${zip_name}" >> "$GITHUB_OUTPUT"
+
+      - name: Upload to Nexus Mods
+        uses: Nexus-Mods/upload-action@v1.0.0-beta.10
+        with:
+          api_key: ${{ secrets.NESXUSMODS_API_KEY }}
+          mod_id: 25986
+          file_id: ${{ vars.NEXUSMOD_FILE_ID }}
+          filename: ${{ steps.package.outputs.zip_name }}
+          version: ${{ steps.package.outputs.version }}
+          display_name: Val's DnD AIO Beyond Patch
+          description: Requires BG3 Script Extender and DnD 5.5e All-in-One BEYOND. Load after DnD 5.5e All-in-One BEYOND.
+          category: main
+          archive_existing_version: true
+          update_mod_version: true
+          changelog: "Release notes: ${{ github.event.release.html_url }}"

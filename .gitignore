@@ -1,0 +1,6 @@
+# Local secrets (API keys etc.) - never commit
+.env
+.env.*
+
+# Packaged uploads; the pak in releases/vX.Y.Z/ is the source of truth
+*.zip
